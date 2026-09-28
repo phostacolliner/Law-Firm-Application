@@ -1,0 +1,8 @@
+{
+  "name": "LexisFirm - Law Firm Operating System & Legal Intelligence",
+  "description": "Comprehensive legal practice management, matter & court diary, trust accounting, conveyancing workflows, client portal, and AI legal intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
