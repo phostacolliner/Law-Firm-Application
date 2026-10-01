@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 interface CourtDiaryProps {
   onOpenNewCourtEvent: (matterId?: string) => void;
@@ -99,6 +100,34 @@ export const CourtDiary: React.FC<CourtDiaryProps> = ({ onOpenNewCourtEvent }) =
               Month View
             </button>
           </div>
+
+          <SectorExportButton
+            sectorKey="diary"
+            reportTitle="Central Court Diary & Hearing Cause List"
+            reportSubtitle="Official statutory cause list for trials, rulings, mentions, and advocate court appearances"
+            sectorName="Court Diary & Registry"
+            statutoryReference="Kenya Judiciary Practice Directions"
+            filenamePrefix="LexisFirm_Cause_List"
+            headers={['Date', 'Time', 'Matter No', 'Matter Title', 'Court & Room', 'Judge / Coram', 'Purpose', 'Assigned Advocate', 'Status', 'Virtual']}
+            rows={filteredEvents.map(e => [
+              e.date,
+              e.time,
+              e.matterNumber,
+              e.matterTitle,
+              `${e.court} (${e.courtRoom || e.room || 'Chambers'})`,
+              e.judgeName || 'Hon. Judge / Coram',
+              e.eventType,
+              e.advocateAssigned,
+              e.status,
+              e.virtualLink ? 'Virtual (MS Teams)' : 'Physical Court'
+            ])}
+            summaryStats={[
+              { label: 'Scheduled Hearings', value: filteredEvents.length, highlight: true },
+              { label: 'Trials & Hearings', value: filteredEvents.filter(e => e.eventType === 'Hearing').length },
+              { label: 'Rulings / Judgments', value: filteredEvents.filter(e => e.eventType === 'Ruling' || e.eventType === 'Judgement').length },
+              { label: 'Virtual MS Teams', value: filteredEvents.filter(e => Boolean(e.virtualLink)).length }
+            ]}
+          />
 
           <button
             onClick={() => onOpenNewCourtEvent()}

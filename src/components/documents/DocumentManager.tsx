@@ -15,8 +15,11 @@ import {
   Scale, 
   ShieldCheck,
   FileCheck2,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 interface DocumentManagerProps {
   onOpenNewDocument: () => void;
@@ -28,6 +31,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ onOpenNewDocum
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedMatterFilter, setSelectedMatterFilter] = useState<string>('all');
+  const [uploadDateFilter, setUploadDateFilter] = useState<string>('');
 
   // Preview & AI Analysis State
   const [inspectingDoc, setInspectingDoc] = useState<LegalDocument | null>(documents[0] || null);
@@ -47,8 +51,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ onOpenNewDocum
 
     const matchesCategory = categoryFilter === 'all' || d.category === categoryFilter;
     const matchesMatter = selectedMatterFilter === 'all' || d.matterId === selectedMatterFilter;
+    const docDate = d.uploadedDate || d.uploadedAt?.slice(0, 10) || '';
+    const matchesDate = !uploadDateFilter || docDate >= uploadDateFilter;
 
-    return matchesSearch && matchesCategory && matchesMatter;
+    return matchesSearch && matchesCategory && matchesMatter && matchesDate;
   });
 
   const handleRunAiAnalysis = async (doc: LegalDocument) => {
@@ -97,13 +103,42 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ onOpenNewDocum
           </p>
         </div>
 
-        <button
-          onClick={onOpenNewDocument}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Upload Document</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <SectorExportButton
+            sectorKey="documents"
+            reportTitle="Digital Document Archive & Evidentiary Index"
+            reportSubtitle="Catalog of filed pleadings, court rulings, affidavits, trial bundles, and land deeds"
+            sectorName="Document Archive"
+            statutoryReference="Evidence Act & Kenya Judiciary E-Filing Rules"
+            filenamePrefix="LexisFirm_Document_Index"
+            headers={['Document Title', 'Matter No', 'Category', 'File Name', 'Format', 'Size', 'Uploaded By', 'Date Added', 'Client Portal']}
+            rows={filteredDocs.map(d => [
+              d.title,
+              d.matterNumber,
+              d.category,
+              d.fileName,
+              d.fileType,
+              d.fileSize,
+              d.uploadedBy,
+              d.uploadedDate || d.uploadedAt?.slice(0, 10) || '2026-09-01',
+              d.isClientVisible ? 'Visible to Client' : 'Internal Privilege'
+            ])}
+            summaryStats={[
+              { label: 'Total Documents', value: filteredDocs.length, highlight: true },
+              { label: 'Pleadings & Filings', value: filteredDocs.filter(d => d.category === 'Pleadings').length },
+              { label: 'Court Orders & Rulings', value: filteredDocs.filter(d => d.category === 'Court Orders').length },
+              { label: 'Client Visible', value: filteredDocs.filter(d => d.isClientVisible).length }
+            ]}
+          />
+
+          <button
+            onClick={onOpenNewDocument}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Upload Document</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -120,6 +155,25 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ onOpenNewDocum
         </div>
 
         <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+          {/* Upload Date Filter with Dropdown Calendar */}
+          <div className="w-40">
+            <DropdownDatePicker
+              value={uploadDateFilter}
+              onChange={(d) => setUploadDateFilter(d)}
+              placeholder="Upload Date..."
+              showPresets={true}
+            />
+          </div>
+          {uploadDateFilter && (
+            <button
+              onClick={() => setUploadDateFilter('')}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs cursor-pointer"
+              title="Clear date filter"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
           {/* Category Filter */}
           <select
             value={categoryFilter}

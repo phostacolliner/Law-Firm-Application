@@ -20,8 +20,11 @@ import {
   Shield,
   ArrowRight,
   Send,
-  Loader2
+  Loader2,
+  X
 } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 interface MatterManagerProps {
   onOpenNewMatter: () => void;
@@ -50,6 +53,7 @@ export const MatterManager: React.FC<MatterManagerProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [filingDateFilter, setFilingDateFilter] = useState<string>('');
   const [activeDossierTab, setActiveDossierTab] = useState<'overview' | 'documents' | 'court' | 'tasks' | 'billing' | 'comms' | 'ai'>('overview');
 
   // AI Matter Assistant State
@@ -74,7 +78,9 @@ export const MatterManager: React.FC<MatterManagerProps> = ({
 
     const matchesCategory = categoryFilter === 'all' || m.category === categoryFilter;
     const matchesStatus = statusFilter === 'all' || m.status === statusFilter;
-    return matchesSearch && matchesCategory && matchesStatus;
+    const matterDate = m.openDate || m.dateOpened || '';
+    const matchesDate = !filingDateFilter || matterDate >= filingDateFilter;
+    return matchesSearch && matchesCategory && matchesStatus && matchesDate;
   });
 
   // Associated records for active matter
@@ -152,13 +158,43 @@ export const MatterManager: React.FC<MatterManagerProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onOpenNewMatter}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Open New Matter</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <SectorExportButton
+            sectorKey="matters"
+            reportTitle="Litigation & Case Matters Master Report"
+            reportSubtitle="Official case docket, pleadings, assigned counsel, and financial billing status"
+            sectorName="Litigation Practice"
+            statutoryReference="Civil Procedure Act & LSK Rules"
+            filenamePrefix="LexisFirm_Matters_Report"
+            headers={['Matter No', 'Matter Title', 'Client Name', 'Category', 'Court', 'Filing Date', 'Advocate', 'Status', 'Budget (KES)', 'Billed (KES)']}
+            rows={filteredMatters.map(m => [
+              m.matterNumber,
+              m.title,
+              m.clientName,
+              m.category,
+              m.court,
+              m.openDate || m.dateOpened || '2026-01-01',
+              m.assignedAdvocate || m.leadAdvocateName || 'Lead Advocate',
+              m.status,
+              (m.budget || 0).toLocaleString(),
+              (m.billedAmount || 0).toLocaleString()
+            ])}
+            summaryStats={[
+              { label: 'Total Matters', value: filteredMatters.length, highlight: true },
+              { label: 'Active Matters', value: filteredMatters.filter(m => m.status === 'Active').length },
+              { label: 'Total Budgeted Fee', value: formatKSh(filteredMatters.reduce((acc, m) => acc + (m.budget || 0), 0)) },
+              { label: 'Total Billed Amount', value: formatKSh(filteredMatters.reduce((acc, m) => acc + (m.billedAmount || 0), 0)) }
+            ]}
+          />
+
+          <button
+            onClick={onOpenNewMatter}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Open New Matter</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -174,7 +210,26 @@ export const MatterManager: React.FC<MatterManagerProps> = ({
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Filing Date Filter with Dropdown Calendar */}
+          <div className="w-40">
+            <DropdownDatePicker
+              value={filingDateFilter}
+              onChange={(d) => setFilingDateFilter(d)}
+              placeholder="Filing Date..."
+              showPresets={true}
+            />
+          </div>
+          {filingDateFilter && (
+            <button
+              onClick={() => setFilingDateFilter('')}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs cursor-pointer"
+              title="Clear date filter"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
           {/* Category Filter */}
           <select
             value={categoryFilter}

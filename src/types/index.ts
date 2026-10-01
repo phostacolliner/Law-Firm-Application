@@ -83,6 +83,10 @@ export interface Matter {
   assignedClerkId: string;
   assignedClerkName: string;
   dateOpened: string;
+  openDate?: string;
+  assignedAdvocate?: string;
+  budget?: number;
+  billedAmount?: number;
   status: MatterStatus;
   priority: MatterPriority;
   estimatedValue: number; // in KSh
@@ -111,7 +115,9 @@ export interface CourtEvent {
   eventType: CourtEventType;
   court: string;
   courtRoom?: string;
+  room?: string;
   judgeName?: string;
+  virtualLink?: string;
   date: string; // YYYY-MM-DD
   time: string; // e.g. 09:00 AM
   advocateAssigned: string;
@@ -139,6 +145,7 @@ export interface LegalDocument {
   version: string;
   uploadedBy: string;
   uploadedAt: string;
+  uploadedDate?: string;
   fileSize: string;
   fileType: string;
   tags: string[];
@@ -159,21 +166,28 @@ export interface Task {
   assignedToName: string;
   assignedRole: string;
   deadline: string;
+  dueDate?: string;
   priority: TaskPriority;
   status: TaskStatus;
   completedAt?: string;
   notes?: string;
+  description?: string;
 }
 
 export interface WorkflowStage {
   id: string;
   order: number;
+  stageNumber?: number;
   name: string;
+  stageName?: string;
   description: string;
   status: 'completed' | 'current' | 'upcoming';
   responsibleRole: string;
+  assignedRole?: string;
   completedDate?: string;
   requiredDocuments: string[];
+  requirements?: string[];
+  estimatedDays?: number;
 }
 
 export interface MatterWorkflow {
@@ -200,6 +214,7 @@ export interface Invoice {
   clientAddress: string;
   clientPin: string;
   dateIssued: string;
+  issueDate?: string;
   dueDate: string;
   status: 'Draft' | 'Sent' | 'Paid' | 'Partially Paid' | 'Overdue';
   items: FeeItem[];
@@ -207,8 +222,10 @@ export interface Invoice {
   applyVat: boolean;
   vatRate: number; // e.g. 16%
   vatAmount: number;
+  taxAmount?: number;
   totalAmount: number;
   amountPaid: number;
+  paidAmount?: number;
   balanceDue: number;
   notes?: string;
 }
@@ -231,6 +248,7 @@ export interface PaymentReceipt {
 export interface TrustTransaction {
   id: string;
   transactionNumber: string; // e.g. TR-2026-0045
+  voucherNumber?: string;
   matterId: string;
   matterNumber: string;
   matterTitle: string;
@@ -240,20 +258,27 @@ export interface TrustTransaction {
   amount: number;
   sourceOrPayee: string;
   purpose: string; // e.g. "10% Conveyancing deposit for LR 209/1450"
+  description?: string;
   date: string;
   verifiedByPartner: string;
   supportingDocRef?: string;
+  paymentMethod?: string;
+  bankAccount?: string;
   balanceAfter: number;
+  runningBalance?: number;
 }
 
 export interface OfficeExpense {
   id: string;
   expenseNumber: string;
+  referenceNumber?: string;
   category: 'Rent & Utilities' | 'Salaries' | 'Court Filing Fees' | 'Library & Subscriptions' | 'IT & Software' | 'Office Administration' | 'Marketing';
   description: string;
   amount: number;
+  vatAmount?: number;
   date: string;
   paidTo: string;
+  vendor?: string;
   paymentMethod: string;
   approvedBy: string;
 }
@@ -265,12 +290,17 @@ export interface TimeEntry {
   matterTitle: string;
   advocateId: string;
   advocateName: string;
+  userName?: string;
   activity: 'Legal Research' | 'Drafting Pleadings' | 'Court Attendance' | 'Client Meeting' | 'Consultation' | 'Registry Filing';
+  description?: string;
   hours: number;
+  durationHours?: number;
   hourlyRate: number; // in KSh
   billable: boolean;
+  totalAmount?: number;
   date: string;
   status: 'unbilled' | 'billed';
+  billed?: boolean;
   notes?: string;
 }
 
@@ -295,7 +325,10 @@ export interface AuditLog {
   userRole: string;
   action: string;
   targetType: string;
+  entityType?: string;
   targetId: string;
+  entityId?: string;
+  ipAddress?: string;
   details: string;
 }
 
@@ -316,6 +349,9 @@ export type DeploymentEnvironment = 'production' | 'staging' | 'demo' | 'fresh_d
 export interface FirmDeploymentProfile {
   firmName: string;
   lskFirmNumber: string;
+  lskRegistrationNo?: string;
+  officeAddress?: string;
+  billingEmail?: string;
   kraPin: string;
   managingPartner: string;
   primaryPractice: string;

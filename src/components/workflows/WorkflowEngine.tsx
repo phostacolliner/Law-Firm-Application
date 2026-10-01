@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ExternalLink
 } from 'lucide-react';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 export const WorkflowEngine: React.FC = () => {
   const { conveyancingWorkflow, advanceWorkflowStage, setSelectedMatterId, setActiveTab } = useApp();
@@ -34,7 +35,30 @@ export const WorkflowEngine: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <SectorExportButton
+            sectorKey="conveyancing"
+            reportTitle="Ardhisasa Land Conveyancing & Registry Pipeline Report"
+            reportSubtitle="Official statutory checklist for title searches, stamp duty clearance, and registration"
+            sectorName="Conveyancing Practice"
+            statutoryReference="Land Registration Act & Ardhisasa Regulations"
+            filenamePrefix="LexisFirm_Conveyancing_Pipeline"
+            headers={['Stage No', 'Stage Name', 'Assigned Role', 'Required Documents', 'Status', 'Completed Date']}
+            rows={conveyancingWorkflow.map(w => [
+              w.order,
+              w.name,
+              w.responsibleRole,
+              w.requiredDocuments.join('; '),
+              w.status.toUpperCase(),
+              w.completedDate || 'Pending'
+            ])}
+            summaryStats={[
+              { label: 'Pipeline Stages', value: conveyancingWorkflow.length },
+              { label: 'Completed Stages', value: conveyancingWorkflow.filter(w => w.status === 'completed').length, highlight: true },
+              { label: 'Active Stage', value: conveyancingWorkflow.find(w => w.status === 'current')?.name || 'N/A' }
+            ]}
+          />
+
           <div className="flex rounded-lg bg-slate-800 p-0.5 border border-slate-700 text-xs">
             <button
               onClick={() => setSelectedWorkflow('conveyancing')}

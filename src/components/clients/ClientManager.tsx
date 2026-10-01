@@ -17,8 +17,11 @@ import {
   Edit2,
   FileCheck2,
   CheckCircle,
-  Clock
+  Clock,
+  X
 } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 interface ClientManagerProps {
   onOpenNewClient: () => void;
@@ -39,6 +42,7 @@ export const ClientManager: React.FC<ClientManagerProps> = ({ onOpenNewClient })
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('');
   const [selectedClient, setSelectedClient] = useState<Client | null>(clients[0] || null);
   const [conflictResult, setConflictResult] = useState<any>(null);
 
@@ -52,7 +56,8 @@ export const ClientManager: React.FC<ClientManagerProps> = ({ onOpenNewClient })
 
     const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
     const matchesType = typeFilter === 'all' || c.type === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
+    const matchesDate = !dateFilter || c.createdDate >= dateFilter;
+    return matchesSearch && matchesStatus && matchesType && matchesDate;
   });
 
   const clientMatters = selectedClient 
@@ -95,13 +100,44 @@ export const ClientManager: React.FC<ClientManagerProps> = ({ onOpenNewClient })
           </p>
         </div>
 
-        <button
-          onClick={onOpenNewClient}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Register New Client</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <SectorExportButton
+            sectorKey="clients"
+            reportTitle="Client CRM Master Register & KYC Index"
+            reportSubtitle="Official directory of corporate, individual, and institutional clients, tax PINs, and KYC status"
+            sectorName="Client CRM & Compliance"
+            statutoryReference="Proceeds of Crime & Anti-Money Laundering Act"
+            filenamePrefix="LexisFirm_Clients_Register"
+            headers={['Client No', 'Name', 'Type', 'ID / Reg No', 'KRA PIN', 'Email', 'Phone', 'Onboarding Date', 'Status', 'Matters Count', 'Balance (KES)']}
+            rows={filteredClients.map(c => [
+              c.clientNumber,
+              c.name,
+              c.type.toUpperCase(),
+              c.idOrRegNumber,
+              c.kraPin,
+              c.email,
+              c.phone,
+              c.createdDate,
+              c.status.toUpperCase(),
+              c.matterCount,
+              c.outstandingBalance.toLocaleString()
+            ])}
+            summaryStats={[
+              { label: 'Registered Clients', value: filteredClients.length, highlight: true },
+              { label: 'Corporate Entities', value: filteredClients.filter(c => c.type === 'company').length },
+              { label: 'Active Clients', value: filteredClients.filter(c => c.status === 'active').length },
+              { label: 'Total Matters', value: filteredClients.reduce((acc, c) => acc + c.matterCount, 0) }
+            ]}
+          />
+
+          <button
+            onClick={onOpenNewClient}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Register New Client</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -117,7 +153,26 @@ export const ClientManager: React.FC<ClientManagerProps> = ({ onOpenNewClient })
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Intake Date Filter with Dropdown Calendar */}
+          <div className="w-40">
+            <DropdownDatePicker
+              value={dateFilter}
+              onChange={(d) => setDateFilter(d)}
+              placeholder="Intake Date..."
+              showPresets={true}
+            />
+          </div>
+          {dateFilter && (
+            <button
+              onClick={() => setDateFilter('')}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs cursor-pointer"
+              title="Clear date filter"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
           {/* Status Filter */}
           <select
             value={statusFilter}

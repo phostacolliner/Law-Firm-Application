@@ -18,6 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 interface BillingManagerProps {
   onOpenNewInvoice: () => void;
@@ -69,13 +70,44 @@ export const BillingManager: React.FC<BillingManagerProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onOpenNewInvoice}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Generate New Fee Note</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <SectorExportButton
+            sectorKey="billing"
+            reportTitle="Fee Notes, Invoices & Collections Aging Report"
+            reportSubtitle="Professional legal fees billed, KRA Output VAT (16%), collections, and receivable aging"
+            sectorName="Billing & Receivables"
+            statutoryReference="Advocates (Remuneration) Order & VAT Act"
+            filenamePrefix="LexisFirm_Billing_Report"
+            headers={['Invoice No', 'Client Name', 'Matter Title', 'Issue Date', 'Due Date', 'Net Fee (KES)', 'VAT 16% (KES)', 'Total (KES)', 'Paid (KES)', 'Balance Due (KES)', 'Status']}
+            rows={filteredInvoices.map(inv => [
+              inv.invoiceNumber,
+              inv.clientName,
+              inv.matterTitle,
+              inv.dateIssued || inv.issueDate || '2026-09-01',
+              inv.dueDate,
+              (inv.subtotal || 0).toLocaleString(),
+              (inv.vatAmount ?? inv.taxAmount ?? 0).toLocaleString(),
+              (inv.totalAmount || 0).toLocaleString(),
+              (inv.paidAmount ?? (inv.totalAmount - inv.balanceDue)).toLocaleString(),
+              (inv.balanceDue || 0).toLocaleString(),
+              inv.status.toUpperCase()
+            ])}
+            summaryStats={[
+              { label: 'Total Invoiced Gross', value: formatKSh(totalBilled), highlight: true },
+              { label: 'Realized Collections', value: formatKSh(totalPaid) },
+              { label: 'Outstanding Receivables', value: formatKSh(totalOutstanding), highlight: totalOutstanding > 0 },
+              { label: 'Output VAT (16%)', value: formatKSh(filteredInvoices.reduce((acc, i) => acc + (i.vatAmount ?? i.taxAmount ?? 0), 0)) }
+            ]}
+          />
+
+          <button
+            onClick={onOpenNewInvoice}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Generate New Fee Note</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Financial Overview Cards */}

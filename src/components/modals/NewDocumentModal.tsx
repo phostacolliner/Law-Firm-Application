@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { DocumentCategory } from '../../types';
 import { FolderOpen, X } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
 
 interface NewDocumentModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({
   const [fileName, setFileName] = useState('');
   const [category, setCategory] = useState<DocumentCategory>('Pleadings');
   const [tags, setTags] = useState('Originating Process, High Court');
+  const [uploadedDate, setUploadedDate] = useState('2026-09-28');
   const [isClientVisible, setIsClientVisible] = useState(true);
   const [contentSnippet, setContentSnippet] = useState('');
 
@@ -38,6 +40,7 @@ export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({
       fileName: fileName || `${title.replace(/\s+/g, '_')}.pdf`,
       category,
       uploadedBy: currentUser.name,
+      uploadedDate: uploadedDate || '2026-09-28',
       fileSize: '1.4 MB',
       fileType: 'PDF',
       tags: tags.split(',').map(t => t.trim()),
@@ -124,6 +127,16 @@ export const NewDocumentModal: React.FC<NewDocumentModalProps> = ({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+            />
+          </div>
+
+          <div>
+            <DropdownDatePicker
+              label="Document / Filing Date"
+              value={uploadedDate}
+              onChange={setUploadedDate}
+              showPresets={true}
+              required={true}
             />
           </div>
 

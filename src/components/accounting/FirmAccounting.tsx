@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react';
 import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 export const FirmAccounting: React.FC = () => {
   const { officeExpenses, addOfficeExpense, invoices, currentUser, formatKSh } = useApp();
@@ -67,13 +68,40 @@ export const FirmAccounting: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsExpenseModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Record Chambers Expense</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <SectorExportButton
+            sectorKey="accounting"
+            reportTitle="Firm Operating Accounting & Profit & Loss Statement"
+            reportSubtitle="Chambers operational expenditures, disbursements, overheads, and net partner margin"
+            sectorName="Practice Accounting"
+            statutoryReference="KRA Statutory Filing & P&L"
+            filenamePrefix="LexisFirm_Operating_Expenses"
+            headers={['Expense No', 'Category', 'Description', 'Vendor / Payee', 'Date', 'Amount (KES)', 'Approved By']}
+            rows={officeExpenses.map(e => [
+              e.referenceNumber || e.expenseNumber || e.id,
+              e.category,
+              e.description,
+              e.paidTo || e.vendor || 'Vendor',
+              e.date,
+              e.amount.toLocaleString(),
+              e.approvedBy
+            ])}
+            summaryStats={[
+              { label: 'Realized Revenue', value: formatKSh(totalOperatingRevenue), highlight: true },
+              { label: 'Operating Expenses', value: formatKSh(totalOperatingExpenses) },
+              { label: 'Net Operating Profit', value: formatKSh(netFirmProfit), highlight: true },
+              { label: 'Profit Margin', value: `${profitMargin}%` }
+            ]}
+          />
+
+          <button
+            onClick={() => setIsExpenseModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Record Chambers Expense</span>
+          </button>
+        </div>
       </div>
 
       {/* Financial KPIs */}

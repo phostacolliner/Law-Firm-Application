@@ -16,6 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 export const TrustAccounting: React.FC = () => {
   const { trustTransactions, addTrustTransaction, matters, currentUser, formatKSh } = useApp();
@@ -92,13 +93,42 @@ export const TrustAccounting: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsDepositModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Record Trust Transaction</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <SectorExportButton
+            sectorKey="trust"
+            reportTitle="Statutory Client Trust Account & Escrow Ledger Statement"
+            reportSubtitle="Official ledger of client stakeholder funds pursuant to Section 81 of the Advocates Act"
+            sectorName="Client Trust Accounting"
+            statutoryReference="Advocates Accounts Rules (Cap 16)"
+            filenamePrefix="LexisFirm_Trust_Ledger"
+            headers={['Date', 'Tx Number', 'Type', 'Client', 'Matter Title', 'Payee / Source', 'Purpose', 'Amount (KES)', 'Running Balance (KES)']}
+            rows={filteredTx.map(t => [
+              t.date,
+              t.transactionNumber,
+              t.type.toUpperCase(),
+              t.clientName,
+              t.matterTitle,
+              t.sourceOrPayee,
+              t.purpose,
+              t.amount.toLocaleString(),
+              t.balanceAfter.toLocaleString()
+            ])}
+            summaryStats={[
+              { label: 'Total Trust Funds Held', value: formatKSh(totalTrustHeld), highlight: true },
+              { label: 'Total Transactions', value: filteredTx.length },
+              { label: 'Client Deposits', value: formatKSh(filteredTx.filter(t => t.type === 'deposit_received').reduce((a, b) => a + b.amount, 0)) },
+              { label: 'Client Disbursements', value: formatKSh(filteredTx.filter(t => t.type !== 'deposit_received').reduce((a, b) => a + b.amount, 0)) }
+            ]}
+          />
+
+          <button
+            onClick={() => setIsDepositModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Record Trust Transaction</span>
+          </button>
+        </div>
       </div>
 
       {/* Statutory Compliance Notice Banner */}

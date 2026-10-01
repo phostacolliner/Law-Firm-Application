@@ -17,6 +17,7 @@ import {
   X
 } from 'lucide-react';
 import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 export const TimeTracker: React.FC = () => {
   const { 
@@ -194,7 +195,33 @@ export const TimeTracker: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <SectorExportButton
+            sectorKey="timetracking"
+            reportTitle="Advocate Billable Hours & Time Utilization Report"
+            reportSubtitle="Timesheet activity log, fee calculations, and work-in-progress reconciliation"
+            sectorName="Time & Utilization"
+            statutoryReference="Advocates Practice Standards"
+            filenamePrefix="LexisFirm_Timesheets"
+            headers={['Date', 'Fee Earner', 'Matter No', 'Matter Title', 'Activity Description', 'Hours', 'Rate (KES/hr)', 'Total Fee (KES)', 'Status']}
+            rows={timeEntries.map(t => [
+              t.date,
+              t.advocateName,
+              t.matterNumber,
+              t.matterTitle,
+              t.notes || t.activity,
+              t.hours.toFixed(1),
+              t.hourlyRate.toLocaleString(),
+              (t.hours * t.hourlyRate).toLocaleString(),
+              t.status === 'billed' ? 'Billed' : 'Unbilled WIP'
+            ])}
+            summaryStats={[
+              { label: 'Total Billable Hours', value: `${totalBillableHours} hrs`, highlight: true },
+              { label: 'Unbilled WIP Value', value: formatKSh(unbilledValue), highlight: unbilledValue > 0 },
+              { label: 'Logged Entries', value: timeEntries.length }
+            ]}
+          />
+
           <button
             onClick={handleGenerateInvoiceFromUnbilled}
             className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer"

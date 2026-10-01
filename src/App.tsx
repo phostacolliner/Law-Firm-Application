@@ -23,6 +23,7 @@ import { ConflictChecker } from './components/conflicts/ConflictChecker';
 import { AuditTrailViewer } from './components/audit/AuditTrailViewer';
 import { ClientPortal } from './components/portal/ClientPortal';
 import { DeploymentResetManager } from './components/deployment/DeploymentResetManager';
+import { SectorReportsHub } from './components/reports/SectorReportsHub';
 
 // Modals
 import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
@@ -107,6 +108,7 @@ const MainAppContent: React.FC = () => {
             {activeTab === 'trust' && <TrustAccounting />}
             {activeTab === 'firm-accounting' && <FirmAccounting />}
             {activeTab === 'time-tracker' && <TimeTracker />}
+            {activeTab === 'reports' && <SectorReportsHub />}
             {activeTab === 'ai-assistant' && <AiLegalAssistant />}
             {activeTab === 'conflicts' && <ConflictChecker />}
             {activeTab === 'audit-trail' && <AuditTrailViewer />}

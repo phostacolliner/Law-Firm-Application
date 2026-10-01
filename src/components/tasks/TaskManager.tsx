@@ -12,8 +12,11 @@ import {
   User, 
   Briefcase,
   ChevronRight,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 interface TaskManagerProps {
   onOpenNewTask: () => void;
@@ -25,6 +28,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ onOpenNewTask }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [dueDateFilter, setDueDateFilter] = useState('');
 
   const columns: { status: TaskStatus; label: string; countColor: string }[] = [
     { status: 'Pending', label: 'Pending / Assigned', countColor: 'bg-slate-700 text-slate-300' },
@@ -42,8 +46,9 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ onOpenNewTask }) => {
 
     const matchesAssignee = assigneeFilter === 'all' || t.assignedToName.includes(assigneeFilter);
     const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter;
+    const matchesDate = !dueDateFilter || t.deadline === dueDateFilter;
 
-    return matchesSearch && matchesAssignee && matchesPriority;
+    return matchesSearch && matchesAssignee && matchesPriority && matchesDate;
   });
 
   const nextStatus = (curr: TaskStatus): TaskStatus => {
@@ -74,13 +79,40 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ onOpenNewTask }) => {
           </p>
         </div>
 
-        <button
-          onClick={onOpenNewTask}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Assign New Task</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <SectorExportButton
+            sectorKey="tasks"
+            reportTitle="Statutory Deadlines & Task Performance Register"
+            reportSubtitle="Official register of matter-linked filings, partner review cycles, and limitation deadlines"
+            sectorName="Practice Tasks & Deadlines"
+            statutoryReference="Law Society of Kenya Practice Standards"
+            filenamePrefix="LexisFirm_Task_Schedule"
+            headers={['Task Title', 'Matter No', 'Assigned Advocate', 'Priority', 'Due Date', 'Status', 'Notes']}
+            rows={filteredTasks.map(t => [
+              t.title,
+              t.matterNumber,
+              t.assignedToName,
+              t.priority,
+              t.deadline,
+              t.status,
+              t.notes || ''
+            ])}
+            summaryStats={[
+              { label: 'Total Tasks', value: filteredTasks.length, highlight: true },
+              { label: 'Urgent Priority', value: filteredTasks.filter(t => t.priority === 'Urgent').length },
+              { label: 'Pending Action', value: filteredTasks.filter(t => t.status === 'Pending').length },
+              { label: 'Completed', value: filteredTasks.filter(t => t.status === 'Complete').length }
+            ]}
+          />
+
+          <button
+            onClick={onOpenNewTask}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Assign New Task</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -96,7 +128,26 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ onOpenNewTask }) => {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Due Date Filter with Dropdown Calendar */}
+          <div className="w-40">
+            <DropdownDatePicker
+              value={dueDateFilter}
+              onChange={(d) => setDueDateFilter(d)}
+              placeholder="Due Date..."
+              showPresets={true}
+            />
+          </div>
+          {dueDateFilter && (
+            <button
+              onClick={() => setDueDateFilter('')}
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs cursor-pointer"
+              title="Clear date filter"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
           {/* Assignee Filter */}
           <select
             value={assigneeFilter}
@@ -121,7 +172,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ onOpenNewTask }) => {
             <option value="Urgent">Urgent</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
-            <option value="Normal">Normal</option>
+            <option value="Low">Low</option>
           </select>
         </div>
       </div>

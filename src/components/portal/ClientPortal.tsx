@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Building2, 
@@ -12,14 +12,22 @@ import {
   FileText, 
   Send,
   Download,
-  Lock
+  Lock,
+  FileSpreadsheet,
+  Printer
 } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { OfficialReportModal } from '../reports/OfficialReportModal';
+import { exportToCsv } from '../../utils/reportExporter';
 
 export const ClientPortal: React.FC = () => {
   const { matters, courtEvents, documents, invoices, addCommunication, formatKSh } = useApp();
 
   const [messageText, setMessageText] = useState('');
   const [messageSent, setMessageSent] = useState(false);
+  const [statementStartDate, setStatementStartDate] = useState('2026-01-01');
+  const [statementEndDate, setStatementEndDate] = useState('2026-12-31');
+  const [isStatementModalOpen, setIsStatementModalOpen] = useState(false);
 
   // Client context: ABC Limited (clientId: 'c-1')
   const clientMatters = matters.filter(m => m.clientId === 'c-1');
@@ -27,9 +35,20 @@ export const ClientPortal: React.FC = () => {
 
   const clientEvents = courtEvents.filter(e => clientMatterIds.includes(e.matterId));
   const clientDocs = documents.filter(d => clientMatterIds.includes(d.matterId) && d.isClientVisible);
-  const clientInvoices = invoices.filter(i => i.clientId === 'c-1');
+  const rawClientInvoices = invoices.filter(i => i.clientId === 'c-1');
+
+  // Filtered invoices by date
+  const clientInvoices = useMemo(() => {
+    return rawClientInvoices.filter(i => {
+      if (statementStartDate && i.dateIssued < statementStartDate) return false;
+      if (statementEndDate && i.dateIssued > statementEndDate) return false;
+      return true;
+    });
+  }, [rawClientInvoices, statementStartDate, statementEndDate]);
 
   const totalOutstanding = clientInvoices.reduce((acc, i) => acc + i.balanceDue, 0);
+  const totalBilled = clientInvoices.reduce((acc, i) => acc + i.totalAmount, 0);
+  const totalPaid = clientInvoices.reduce((acc, i) => acc + (i.totalAmount - i.balanceDue), 0);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -185,10 +204,71 @@ export const ClientPortal: React.FC = () => {
 
       {/* Invoices & Fee Notes Section */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
-        <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <Receipt className="w-4 h-4 text-emerald-400" />
-          Invoices & Statements of Account
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <Receipt className="w-4 h-4 text-emerald-400" />
+              Invoices & Statements of Account ({clientInvoices.length})
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Fee notes issued under Advocates Remuneration Order (ARO)
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                exportToCsv(
+                  `ABC_Limited_Statement_of_Account_${statementStartDate}_to_${statementEndDate}.csv`,
+                  ['Invoice No', 'Matter', 'Date Issued', 'Due Date', 'Total (KES)', 'Balance Due (KES)', 'Status'],
+                  clientInvoices.map(i => [i.invoiceNumber, i.matterTitle, i.dateIssued, i.dueDate, i.totalAmount, i.balanceDue, i.status])
+                );
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 cursor-pointer"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              onClick={() => setIsStatementModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Official Statement (PDF)</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Date Filter Bar */}
+        <div className="flex flex-wrap items-center gap-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800 text-xs text-slate-400">
+          <span className="font-semibold text-slate-300">Filter By Billing Date:</span>
+          <div className="w-40">
+            <DropdownDatePicker
+              value={statementStartDate}
+              onChange={setStatementStartDate}
+              placeholder="From date"
+              showPresets={true}
+            />
+          </div>
+          <span className="text-slate-500 font-bold">to</span>
+          <div className="w-40">
+            <DropdownDatePicker
+              value={statementEndDate}
+              onChange={setStatementEndDate}
+              placeholder="To date"
+              showPresets={true}
+            />
+          </div>
+          <button
+            onClick={() => {
+              setStatementStartDate('2026-01-01');
+              setStatementEndDate('2026-12-31');
+            }}
+            className="text-[11px] text-amber-400 hover:underline ml-auto"
+          >
+            Reset Dates
+          </button>
+        </div>
 
         <div className="space-y-3">
           {clientInvoices.map(inv => (
@@ -262,6 +342,35 @@ export const ClientPortal: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Official Client Statement Modal */}
+      {isStatementModalOpen && (
+        <OfficialReportModal
+          isOpen={isStatementModalOpen}
+          onClose={() => setIsStatementModalOpen(false)}
+          reportTitle="Client Statement of Account & Fee Notes Ledger"
+          reportSubtitle={`Client: ABC Limited (Ref: CL-2024-001) • Period: ${statementStartDate} to ${statementEndDate}`}
+          sectorName="Client Billing & Statement of Account"
+          headers={['Invoice No', 'Matter Reference', 'Date Issued', 'Due Date', 'Total (KES)', 'Balance Due (KES)', 'Status']}
+          rows={clientInvoices.map(i => [
+            i.invoiceNumber,
+            i.matterTitle,
+            i.dateIssued,
+            i.dueDate,
+            formatKSh(i.totalAmount),
+            formatKSh(i.balanceDue),
+            i.status
+          ])}
+          summaryStats={[
+            { label: 'Total Invoiced Value', value: formatKSh(totalBilled) },
+            { label: 'Total Paid / Settled', value: formatKSh(totalPaid), highlight: true },
+            { label: 'Current Outstanding', value: formatKSh(totalOutstanding), highlight: totalOutstanding > 0 },
+            { label: 'Fee Notes Count', value: clientInvoices.length }
+          ]}
+          filenamePrefix="ABC_Limited_Statement_of_Account"
+          statutoryReference="Advocates Remuneration Order (ARO) & Advocates Accounts Rules Cap 16"
+        />
+      )}
     </div>
   );
 };

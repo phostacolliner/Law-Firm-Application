@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { History, Search, ShieldCheck, Clock, User, Filter, FileText, X } from 'lucide-react';
 import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 export const AuditTrailViewer: React.FC = () => {
   const { auditLogs } = useApp();
@@ -23,14 +24,38 @@ export const AuditTrailViewer: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div>
-        <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-          <History className="w-5 h-5 text-amber-400" />
-          Audit Trail & Regulatory Compliance Register
-        </h1>
-        <p className="text-xs text-slate-400">
-          Immutable event log of user actions, file accesses, trust ledger verifications, and financial modifications
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            <History className="w-5 h-5 text-amber-400" />
+            Audit Trail & Regulatory Compliance Register
+          </h1>
+          <p className="text-xs text-slate-400">
+            Immutable event log of user actions, file accesses, trust ledger verifications, and financial modifications
+          </p>
+        </div>
+
+        <SectorExportButton
+          sectorKey="audit"
+          reportTitle="Statutory Audit Trail & Regulatory Compliance Register"
+          reportSubtitle="Cryptographically ordered log of all system actions, trust ledger postings, and data changes"
+          sectorName="Regulatory Audit"
+          statutoryReference="Data Protection Act & LSK Code of Conduct"
+          filenamePrefix="LexisFirm_Audit_Log"
+          headers={['Timestamp', 'Action', 'Target Type', 'Target ID', 'User', 'Details']}
+          rows={filteredLogs.map(l => [
+            l.timestamp,
+            l.action,
+            l.targetType,
+            l.targetId,
+            l.userName,
+            l.details
+          ])}
+          summaryStats={[
+            { label: 'Audit Records', value: filteredLogs.length, highlight: true },
+            { label: 'Integrity Status', value: 'SHA-256 Verified' }
+          ]}
+        />
       </div>
 
       {/* Search & Date Filter Bar */}

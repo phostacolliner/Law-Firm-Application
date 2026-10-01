@@ -94,12 +94,12 @@ interface AppContextType {
   importDatabaseJson: (jsonString: string) => { success: boolean; message: string; recordCounts?: Record<string, number> };
   
   // Actions
-  addClient: (client: Omit<Client, 'id' | 'clientNumber' | 'matterCount' | 'outstandingBalance' | 'createdDate'>) => Client;
+  addClient: (client: Omit<Client, 'id' | 'clientNumber' | 'matterCount' | 'outstandingBalance' | 'createdDate'> & { createdDate?: string }) => Client;
   updateClient: (client: Client) => void;
   addMatter: (matter: Omit<Matter, 'id' | 'matterNumber' | 'dateOpened'>) => Matter;
   updateMatter: (matter: Matter) => void;
   addCourtEvent: (event: Omit<CourtEvent, 'id'>) => CourtEvent;
-  addDocument: (doc: Omit<LegalDocument, 'id' | 'uploadedAt' | 'version'>) => LegalDocument;
+  addDocument: (doc: Omit<LegalDocument, 'id' | 'uploadedAt' | 'version'> & { uploadedAt?: string; uploadedDate?: string }) => LegalDocument;
   addTask: (task: Omit<Task, 'id'>) => Task;
   updateTaskStatus: (taskId: string, status: Task['status']) => void;
   addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => Invoice;
@@ -342,7 +342,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     logAudit('Role Switched', 'User Session', role, `Switched context to ${role}`);
   };
 
-  const addClient = (data: Omit<Client, 'id' | 'clientNumber' | 'matterCount' | 'outstandingBalance' | 'createdDate'>): Client => {
+  const addClient = (data: Omit<Client, 'id' | 'clientNumber' | 'matterCount' | 'outstandingBalance' | 'createdDate'> & { createdDate?: string }): Client => {
     const num = `CL-2026-${String(clients.length + 1).padStart(3, '0')}`;
     const newClient: Client = {
       ...data,
@@ -350,7 +350,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       clientNumber: num,
       matterCount: 0,
       outstandingBalance: 0,
-      createdDate: new Date().toISOString().split('T')[0]
+      createdDate: data.createdDate || new Date().toISOString().split('T')[0]
     };
     setClients(prev => [newClient, ...prev]);
     logAudit('Created Client', 'Client CRM', newClient.clientNumber, `Registered ${newClient.name} (${newClient.type})`);
@@ -392,11 +392,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newEvent;
   };
 
-  const addDocument = (data: Omit<LegalDocument, 'id' | 'uploadedAt' | 'version'>): LegalDocument => {
+  const addDocument = (data: Omit<LegalDocument, 'id' | 'uploadedAt' | 'version'> & { uploadedAt?: string; uploadedDate?: string }): LegalDocument => {
     const newDoc: LegalDocument = {
       ...data,
       id: `doc-${Date.now()}`,
-      uploadedAt: new Date().toISOString().split('T')[0],
+      uploadedAt: data.uploadedAt || data.uploadedDate || new Date().toISOString().split('T')[0],
+      uploadedDate: data.uploadedDate || data.uploadedAt || new Date().toISOString().split('T')[0],
       version: 'v1.0'
     };
     setDocuments(prev => [newDoc, ...prev]);

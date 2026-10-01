@@ -17,7 +17,8 @@ import {
   History,
   ExternalLink,
   ChevronRight,
-  Server
+  Server,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -87,6 +88,12 @@ export const Sidebar: React.FC = () => {
         { id: 'trust', label: 'Client Trust Accounting', icon: Landmark, badge: 'Statutory' },
         { id: 'firm-accounting', label: 'Firm Operating P&L', icon: BarChart3, badge: null },
         { id: 'time-tracker', label: 'Time Tracking & Rates', icon: Timer, badge: null }
+      ]
+    },
+    {
+      group: 'Reporting & Analytics',
+      items: [
+        { id: 'reports', label: 'Sector Reports & Extraction', icon: FileSpreadsheet, badge: 'Export' }
       ]
     },
     {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Briefcase, 
@@ -16,8 +16,11 @@ import {
   ShieldCheck,
   Building,
   UserCheck,
-  Server
+  Server,
+  FileSpreadsheet
 } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
+import { SectorExportButton } from '../reports/SectorExportButton';
 
 export const FirmDashboard: React.FC = () => {
   const { 
@@ -35,6 +38,9 @@ export const FirmDashboard: React.FC = () => {
   } = useApp();
 
   // Metrics calculations
+  const [dashStartDate, setDashStartDate] = useState<string>('2026-01-01');
+  const [dashEndDate, setDashEndDate] = useState<string>('2026-12-31');
+
   const activeMattersCount = matters.filter(m => m.status !== 'Closed').length;
   const newMattersThisMonth = 4; // simulated recent openings
   const upcomingCourtEvents = courtEvents.filter(e => e.status === 'Upcoming');
@@ -71,6 +77,76 @@ export const FirmDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Executive Intelligence Control Bar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            <Scale className="w-5 h-5 text-amber-400" />
+            {firmProfile?.firmName || 'LexisFirm Advocates LLP'} • Practice BI & Analytics
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Executive oversight, court dockets, fee realizations, trust segregation & advocate productivity
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Dropdown Calendar Date Range */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
+            <span className="hidden sm:inline">Period:</span>
+            <div className="w-36">
+              <DropdownDatePicker
+                value={dashStartDate}
+                onChange={setDashStartDate}
+                placeholder="From date"
+                showPresets={true}
+              />
+            </div>
+            <span className="text-slate-500 font-bold">-</span>
+            <div className="w-36">
+              <DropdownDatePicker
+                value={dashEndDate}
+                onChange={setDashEndDate}
+                placeholder="To date"
+                showPresets={true}
+              />
+            </div>
+          </div>
+
+          {/* Sector Export Button */}
+          <SectorExportButton
+            sectorKey="dashboard"
+            reportTitle="Executive Practice Performance & Management Report"
+            reportSubtitle="High-level operational overview: matter caseload, revenue collected, trust position, and court docket"
+            sectorName="Executive Practice Summary"
+            statutoryReference="Managing Partner Governance Report"
+            filenamePrefix="LexisFirm_Executive_Summary"
+            headers={['Metric Category', 'Active Metric', 'Current Value', 'Statutory Benchmark / Status']}
+            rows={[
+              ['Litigation & Matters', 'Active Matter Docket', `${activeMattersCount} matters`, 'Open & In-Progress'],
+              ['Court Operations', 'Hearings Scheduled', `${upcomingCourtEvents.length} events`, 'Kenyan Courts Docket'],
+              ['Revenue & Billing', 'Collected Fee Revenue', formatKSh(totalCollectedRevenue), 'Realized in Bank'],
+              ['Revenue & Billing', 'Outstanding Receivables', formatKSh(totalOutstandingFees), 'Pending Client Settlement'],
+              ['Client Trust Funds', 'Client Escrow Held', formatKSh(totalTrustBalance), 'Segregated under Cap 16'],
+              ['Task Governance', 'Overdue Compliance Actions', `${overdueTasksCount} tasks`, overdueTasksCount > 0 ? 'Urgent Review' : 'Optimal Compliance']
+            ]}
+            summaryStats={[
+              { label: 'Active Matters', value: activeMattersCount, highlight: true },
+              { label: 'Collected Revenue', value: formatKSh(totalCollectedRevenue) },
+              { label: 'Trust Funds Held', value: formatKSh(totalTrustBalance) },
+              { label: 'Upcoming Court Dates', value: upcomingCourtEvents.length }
+            ]}
+          />
+
+          <button
+            onClick={() => setActiveTab('reports')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors shadow-sm cursor-pointer"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Reports Hub</span>
+          </button>
+        </div>
+      </div>
+
       {/* Top Banner: Urgent Court Alert */}
       {hearingTomorrow && (
         <div className="bg-gradient-to-r from-rose-950/80 via-slate-900 to-slate-900 border border-rose-500/40 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

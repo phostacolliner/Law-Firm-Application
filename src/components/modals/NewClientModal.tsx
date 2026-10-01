@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ClientType } from '../../types';
 import { UserCheck, X } from 'lucide-react';
+import { DropdownDatePicker } from '../common/DropdownDatePicker';
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({ isOpen, onClose 
   const [address, setAddress] = useState('Nairobi, Kenya');
   const [idOrRegNumber, setIdOrRegNumber] = useState('');
   const [kraPin, setKraPin] = useState('P051');
+  const [createdDate, setCreatedDate] = useState('2026-09-28');
   const [notes, setNotes] = useState('');
 
   if (!isOpen) return null;
@@ -38,7 +40,8 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({ isOpen, onClose 
       kraPin,
       status: 'active',
       portalAccess: true,
-      notes
+      notes,
+      createdDate: createdDate || '2026-09-28'
     });
 
     setSelectedClientId(newC.id);
@@ -158,6 +161,16 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({ isOpen, onClose 
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white"
+            />
+          </div>
+
+          <div>
+            <DropdownDatePicker
+              label="Registration / Intake Date"
+              value={createdDate}
+              onChange={setCreatedDate}
+              showPresets={true}
+              required={true}
             />
           </div>
 
